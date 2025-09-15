@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard API测试工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3498db',
+                        secondary: '#2ecc71',
+                        danger: '#e74c3c',
+                        neutral: '#34495e',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 标题和说明 -->
+        <div class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-neutral mb-3">
+                Dashboard API 测试工具
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                这个工具用于测试和验证Dashboard数据获取功能，帮助诊断前端显示全0的问题
+            </p>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+            <button id="test-api-btn" class="bg-gradient-blue text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-center gap-2 w-full md:w-auto">
+                <i class="fa fa-refresh" aria-hidden="true"></i>
+                <span>测试Dashboard API</span>
+            </button>
+            <button id="clear-btn" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg shadow hover:bg-gray-300 transition duration-300 flex items-center justify-center gap-2 w-full md:w-auto">
+                <i class="fa fa-trash" aria-hidden="true"></i>
+                <span>清除结果</span>
+            </button>
+        </div>
+
+        <!-- 加载状态指示器 -->
+        <div id="loading-indicator" class="hidden flex flex-col items-center justify-center mb-8 py-10">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary mb-4"></div>
+            <p class="text-gray-600">正在获取Dashboard数据，请稍候...</p>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- API原始响应 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-neutral text-white px-6 py-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <i class="fa fa-code" aria-hidden="true"></i>
+                        <span>API原始响应</span>
+                    </h2>
+                </div>
+                <div class="p-4">
+                    <pre id="raw-response" class="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm text-gray-800 h-80">
+                        <code>// 点击上方按钮开始测试</code>
+                    </pre>
+                </div>
+            </div>
+
+            <!-- 处理后的数据 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white px-6 py-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <i class="fa fa-cogs" aria-hidden="true"></i>
+                        <span>处理后的数据结构</span>
+                    </h2>
+                </div>
+                <div class="p-4">
+                    <pre id="processed-data" class="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm text-gray-800 h-80">
+                        <code>// 处理后的数据将显示在这里</code>
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 指标卡片预览 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-neutral mb-4 flex items-center gap-2">
+                <i class="fa fa-dashboard" aria-hidden="true"></i>
+                <span>指标预览</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="metrics-preview">
+                <!-- 指标卡片将在这里动态生成 -->
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    测试API后将显示指标预览
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据分析 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-neutral mb-4 flex items-center gap-2">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <span>数据分析</span>
+            </h2>
+            <div id="data-analysis" class="text-gray-600">
+                <p>测试API后将显示数据分析结果</p>
+            </div>
+        </div>
+
+        <!-- 错误日志 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-neutral mb-4 flex items-center gap-2">
+                <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                <span>错误日志</span>
+            </h2>
+            <div id="error-log" class="text-gray-600">
+                <p class="text-green-600">暂无错误</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const testApiBtn = document.getElementById('test-api-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const rawResponse = document.getElementById('raw-response');
+            const processedData = document.getElementById('processed-data');
+            const metricsPreview = document.getElementById('metrics-preview');
+            const dataAnalysis = document.getElementById('data-analysis');
+            const errorLog = document.getElementById('error-log');
+
+            // 格式化数字，添加千位分隔符
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+
+            // 测试Dashboard API
+            testApiBtn.addEventListener('click', async function() {
+                // 重置UI
+                rawResponse.innerHTML = '<code>加载中...</code>';
+                processedData.innerHTML = '<code>加载中...</code>';
+                metricsPreview.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">加载中...</div>';
+                dataAnalysis.innerHTML = '<p>分析中...</p>';
+                errorLog.innerHTML = '<p class="text-green-600">暂无错误</p>';
+                loadingIndicator.classList.remove('hidden');
+                testApiBtn.disabled = true;
+                testApiBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                
+                try {
+                    console.log('开始测试Dashboard API...');
+                    
+                    // 调用Dashboard API
+                    const startTime = Date.now();
+                    const response = await axios.get('/api/getDashboardMetrics');
+                    const endTime = Date.now();
+                    
+                    // 显示原始响应
+                    rawResponse.innerHTML = `<code>${JSON.stringify(response, null, 2)}</code>`;
+                    
+                    // 处理数据（模拟前端处理逻辑）
+                    let dashboardData = response.data;
+                    
+                    // 检查响应数据结构
+                    if (response.data && response.data.code === 0 && response.data.data) {
+                        dashboardData = response.data.data;
+                    } else if (response.data && response.data.value) {
+                        dashboardData = response.data.value;
+                    }
+                    
+                    // 创建符合模板要求的指标对象
+                    const metricsData = {
+                        // 直接从dashboardData获取基本指标
+                        count1: dashboardData.count1 || 0,
+                        risk_count: dashboardData.risk_count || 0,
+                        field_count: dashboardData.field_count || 0,
+                        total_nums: dashboardData.total_nums || 0,
+                        
+                        // 处理平台相关数据
+                        platforms: dashboardData.platforms || [],
+                        platform_counts: [],
+                        
+                        // 处理语言相关数据
+                        languages: dashboardData.languages || [],
+                        language_counts: [],
+                        
+                        // 处理字段信息
+                        fields: dashboardData.fields || []
+                    };
+                    
+                    // 转换平台分布数据格式
+                    if (dashboardData.platform_counts && typeof dashboardData.platform_counts === 'object') {
+                        if (Array.isArray(dashboardData.platform_counts)) {
+                            metricsData.platform_counts = dashboardData.platform_counts;
+                            if (metricsData.platforms.length === 0) {
+                                metricsData.platforms = dashboardData.platform_counts.map(item => item.name);
+                            }
+                        } else {
+                            metricsData.platform_counts = Object.entries(dashboardData.platform_counts)
+                                .map(([name, value]) => ({ name, value }));
+                            metricsData.platforms = Object.keys(dashboardData.platform_counts);
+                        }
+                    }
+                    
+                    // 转换语言分布数据格式
+                    if (dashboardData.language_counts && typeof dashboardData.language_counts === 'object') {
+                        if (Array.isArray(dashboardData.language_counts)) {
+                            metricsData.language_counts = dashboardData.language_counts;
+                            if (metricsData.languages.length === 0) {
+                                metricsData.languages = dashboardData.language_counts.map(item => item.name);
+                            }
+                        } else {
+                            metricsData.language_counts = Object.entries(dashboardData.language_counts)
+                                .map(([name, value]) => ({ name, value }));
+                            metricsData.languages = Object.keys(dashboardData.language_counts);
+                        }
+                    }
+                    
+                    // 显示处理后的数据
+                    processedData.innerHTML = `<code>${JSON.stringify(metricsData, null, 2)}</code>`;
+                    
+                    // 生成指标预览卡片
+                    generateMetricsPreview(metricsData);
+                    
+                    // 生成数据分析
+                    generateDataAnalysis(response, metricsData, endTime - startTime);
+                    
+                    console.log('Dashboard API测试完成');
+                    
+                } catch (error) {
+                    console.error('Dashboard API测试失败:', error);
+                    
+                    // 显示错误信息
+                    errorLog.innerHTML = `
+                        <div class="text-danger">
+                            <p class="font-semibold">API调用失败:</p>
+                            <pre class="mt-2 bg-red-50 p-3 rounded text-sm">${JSON.stringify({
+                                message: error.message,
+                                status: error.response?.status,
+                                statusText: error.response?.statusText,
+                                url: error.config?.url
+                            }, null, 2)}</pre>
+                        </div>
+                    `;
+                    
+                    // 显示模拟数据供参考
+                    const mockData = {
+                        count1: 15678,
+                        risk_count: 4321,
+                        platforms: ['微博', '百度', '推特', '中国互联网联合辟谣平台', '人民日报', '人民网', '微信', '腾讯新闻'],
+                        field_count: 24,
+                        total_nums: 98765,
+                        languages: ['中文', '英文', '西班牙文'],
+                        fields: ['id', '标题', '内容', '发布时间', '来源平台', '风险等级', '语言', '关键词', '作者', '阅读量'],
+                        platform_counts: [
+                            { name: '微博', value: 1256 },
+                            { name: '百度', value: 985 },
+                            { name: '推特', value: 756 },
+                            { name: '中国互联网联合辟谣平台', value: 432 },
+                            { name: '人民日报', value: 678 },
+                            { name: '人民网', value: 543 },
+                            { name: '微信', value: 1890 },
+                            { name: '腾讯新闻', value: 1056 }
+                        ],
+                        language_counts: [
+                            { name: '中文', value: 5890 },
+                            { name: '英文', value: 2456 },
+                            { name: '西班牙文', value: 1234 }
+                        ]
+                    };
+                    
+                    processedData.innerHTML = `<code class="text-gray-500">// 以下是模拟数据（仅供参考）\n${JSON.stringify(mockData, null, 2)}</code>`;
+                    generateMetricsPreview(mockData);
+                    
+                } finally {
+                    // 恢复UI状态
+                    loadingIndicator.classList.add('hidden');
+                    testApiBtn.disabled = false;
+                    testApiBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            });
+
+            // 清除结果
+            clearBtn.addEventListener('click', function() {
+                rawResponse.innerHTML = '<code>// 点击上方按钮开始测试</code>';
+                processedData.innerHTML = '<code>// 处理后的数据将显示在这里</code>';
+                metricsPreview.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">测试API后将显示指标预览</div>';
+                dataAnalysis.innerHTML = '<p>测试API后将显示数据分析结果</p>';
+                errorLog.innerHTML = '<p class="text-green-600">暂无错误</p>';
+            });
+
+            // 生成指标预览卡片
+            function generateMetricsPreview(metricsData) {
+                const cards = [
+                    {
+                        title: '事件总数',
+                        value: formatNumber(metricsData.count1 || 0),
+                        icon: 'database',
+                        description: '数据库中所有事件的总数',
+                        color: 'primary'
+                    },
+                    {
+                        title: '风险事件数',
+                        value: formatNumber(metricsData.risk_count || 0),
+                        icon: 'exclamation-triangle',
+                        description: '标记为风险的事件数量',
+                        color: 'danger'
+                    },
+                    {
+                        title: '平台数量',
+                        value: metricsData.platforms?.length || 0,
+                        icon: 'layer-group',
+                        description: '支持的不同平台数量',
+                        color: 'secondary'
+                    },
+                    {
+                        title: '字段数量',
+                        value: metricsData.field_count || 0,
+                        icon: 'table-columns',
+                        description: '数据库中事件记录的字段数量',
+                        color: 'amber-500'
+                    },
+                    {
+                        title: '数据总量',
+                        value: formatNumber(metricsData.total_nums || 0),
+                        icon: 'database',
+                        description: '数据库中存储的数据总量',
+                        color: 'purple-500'
+                    },
+                    {
+                        title: '语言数量',
+                        value: metricsData.languages?.length || 0,
+                        icon: 'language',
+                        description: '支持的不同语言数量',
+                        color: 'teal-500'
+                    }
+                ];
+
+                let html = '';
+                cards.forEach(card => {
+                    html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-sm font-medium text-gray-600">${card.title}</h3>
+                                <i class="fa fa-${card.icon} text-${card.color}" aria-hidden="true"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-gray-800 mb-1">${card.value}</div>
+                            <p class="text-xs text-gray-500">${card.description}</p>
+                        </div>
+                    `;
+                });
+
+                metricsPreview.innerHTML = html;
+            }
+
+            // 生成数据分析
+            function generateDataAnalysis(response, metricsData, responseTime) {
+                const analysis = [];
+                
+                // 响应状态分析
+                if (response && response.status === 200) {
+                    analysis.push('<p class="text-green-600 font-medium"><i class="fa fa-check-circle mr-2"></i>API调用成功</p>');
+                } else {
+                    analysis.push('<p class="text-red-600 font-medium"><i class="fa fa-times-circle mr-2"></i>API调用失败</p>');
+                }
+                
+                // 响应时间分析
+                analysis.push(`<p><i class="fa fa-clock-o mr-2"></i>响应时间: ${responseTime}ms</p>`);
+                
+                // 数据完整性分析
+                const hasValidData = metricsData.count1 > 0 || metricsData.risk_count > 0 || 
+                                    (metricsData.platforms && metricsData.platforms.length > 0);
+                
+                if (hasValidData) {
+                    analysis.push('<p class="text-green-600"><i class="fa fa-check-circle mr-2"></i>数据结构完整，包含有效值</p>');
+                } else {
+                    analysis.push('<p class="text-yellow-600"><i class="fa fa-exclamation-circle mr-2"></i>警告: 数据可能不完整或全部为0</p>');
+                }
+                
+                // 数据字段分析
+                const fieldsAnalysis = [];
+                fieldsAnalysis.push(`- 事件总数: ${metricsData.count1 || 0}`);
+                fieldsAnalysis.push(`- 风险事件数: ${metricsData.risk_count || 0}`);
+                fieldsAnalysis.push(`- 平台数量: ${metricsData.platforms?.length || 0}`);
+                fieldsAnalysis.push(`- 字段数量: ${metricsData.field_count || 0}`);
+                fieldsAnalysis.push(`- 数据总量: ${metricsData.total_nums || 0}`);
+                fieldsAnalysis.push(`- 语言数量: ${metricsData.languages?.length || 0}`);
+                
+                analysis.push('<p class="mt-2 font-medium"><i class="fa fa-list-alt mr-2"></i>数据字段明细:</p>');
+                analysis.push(`<ul class="ml-6 list-disc text-sm">${fieldsAnalysis.map(f => `<li>${f}</li>`).join('')}</ul>`);
+                
+                // 平台分布分析
+                if (metricsData.platform_counts && metricsData.platform_counts.length > 0) {
+                    const topPlatforms = metricsData.platform_counts
+                        .sort((a, b) => b.value - a.value)
+                        .slice(0, 3)
+                        .map(p => `${p.name}: ${formatNumber(p.value)}`)
+                        .join(', ');
+                    analysis.push(`<p class="mt-2"><i class="fa fa-chart-bar mr-2"></i>主要平台: ${topPlatforms}</p>`);
+                }
+                
+                dataAnalysis.innerHTML = analysis.join('');
+            }
+        });
+    </script>
+</body>
+</html>

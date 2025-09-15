@@ -24,6 +24,7 @@ def init_search_clients(app_config):
     global es_client, milvus_client
     
     # 初始化Elasticsearch
+    # 初始化Elasticsearch
     try:
         es_client = Elasticsearch(
             hosts=app_config.get('ES_HOSTS'),
@@ -31,13 +32,16 @@ def init_search_clients(app_config):
         )
         if es_client.ping():
             logger.info('连接Elasticsearch成功!')
-            count = es_client.cat.count(index=app_config.get('ES_INDEX'), format="json")[0]['count']
-            logger.info(f"ES索引 '{app_config.get('ES_INDEX')}' 中当前文档总数: {count}")
+            try:
+                count = es_client.cat.count(index=app_config.get('ES_INDEX'), format="json")[0]['count']
+                logger.info(f"ES索引 '{app_config.get('ES_INDEX')}' 中当前文档总数: {count}")
+            except:
+                logger.warning(f"无法获取ES索引 '{app_config.get('ES_INDEX')}' 的文档总数")
         else:
             raise ConnectionError("连接Elasticsearch失败")
     except Exception as e:
         logger.error(f"初始化Elasticsearch客户端时出错: {e}")
-        exit(1)
+        logger.warning("应用程序将继续运行，但搜索功能可能受限")
 
     # 初始化Milvus
     try:
@@ -45,7 +49,7 @@ def init_search_clients(app_config):
         logger.info("连接Milvus成功!")
     except Exception as e:
         logger.error(f"初始化Milvus客户端时出错: {e}")
-        exit(1)
+        logger.warning("应用程序将继续运行，但向量搜索功能可能受限")
 
 # --- 文本搜索逻辑 ---
 

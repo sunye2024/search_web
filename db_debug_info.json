@@ -1,0 +1,21 @@
+{
+  "config": {
+    "host": "localhost",
+    "port": 27017,
+    "username": "",
+    "password": "",
+    "db_name": "admin",
+    "collection_name": "event"
+  },
+  "databases": [
+    "admin",
+    "config",
+    "local"
+  ],
+  "collections": [
+    "event2",
+    "event",
+    "system.version"
+  ],
+  "document_count": 1198000
+}

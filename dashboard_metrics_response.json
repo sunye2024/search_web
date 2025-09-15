@@ -1,0 +1,67 @@
+{
+  "collections": [
+    "event2",
+    "event",
+    "system.version"
+  ],
+  "count1": 1198000,
+  "field_count": 17,
+  "fields": [
+    "Event",
+    "Comment",
+    "IP",
+    "Link",
+    "Modal",
+    "Reblog",
+    "Time",
+    "Tool",
+    "Type",
+    "account",
+    "language",
+    "platform",
+    "region",
+    "isRisk",
+    "Praise",
+    "Pre_node",
+    "Platform"
+  ],
+  "language_count": 3,
+  "language_counts": {
+    "中文": 798957,
+    "英文": 1786,
+    "西班牙文": 397257
+  },
+  "languages": [
+    "中文",
+    "英文",
+    "西班牙文"
+  ],
+  "platform_count": 9,
+  "platform_counts": {
+    "中国互联网联合辟谣平台": 582,
+    "人民日报": 572,
+    "人民网": 622,
+    "微信": 33063,
+    "微博": 763950,
+    "微博,百度": 105,
+    "推特": 399043,
+    "百度": 53,
+    "腾讯新闻": 10
+  },
+  "platforms": [
+    "中国互联网联合辟谣平台",
+    "人民日报",
+    "人民网",
+    "微信",
+    "微博",
+    "微博,百度",
+    "推特",
+    "百度",
+    "腾讯新闻"
+  ],
+  "risk_count": 54328,
+  "total_comment": 144647583,
+  "total_nums": 1509391925,
+  "total_praise": 1086149787,
+  "total_reblog": 278594555
+}
