@@ -16,8 +16,8 @@ except ImportError:
                     'port': int(os.environ.get('MONGODB_PORT', '27017')),
                     'username': os.environ.get('MONGODB_USERNAME', ''),
                     'password': os.environ.get('MONGODB_PASSWORD', ''),
-                    'db_name': os.environ.get('MONGODB_DB', 'news_search'),
-                    'collection_name': os.environ.get('MONGODB_COLLECTION', 'events')
+                    'db_name': os.environ.get('MONGODB_DB', 'admin'),
+                    'collection_name': os.environ.get('MONGODB_COLLECTION', 'event')
                 }
             # 为Nebula提供默认配置
             elif db_type == 'nebula':

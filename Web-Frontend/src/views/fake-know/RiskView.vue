@@ -267,6 +267,7 @@
 
 <script>
 import { getRiskEvents, getAllEvents, exportEvents } from '../../service/apiManager'
+import { useTraceStore } from '../../store/traceStore'
 
 export default {
   name: 'RiskView',
@@ -287,6 +288,12 @@ export default {
       availableRegions: ['中国', '美国', '日本', '韩国', '英国', '德国', '法国', '其他'] // 可用地区列表
     }
   },
+  setup() {
+    return {
+      traceStore: useTraceStore()
+    }
+  },
+  
   mounted() {
     // 首先获取核心的事件数据
     this.fetchEvents();
@@ -294,7 +301,7 @@ export default {
     Promise.all([
       this.fetchDashboardMetrics()
     ]).catch(error => {
-      console.warn('部分非核心数据获取失败，但页面仍可正常使用:', error);
+      console.warn('部分非核心数据获取失败，但页面仍可正常使用:', error?.message || error);
     });
   },
   methods: {
@@ -347,25 +354,38 @@ export default {
         // 记录请求结束时间
         const endTime = Date.now();
         console.log(`事件数据请求成功，耗时: ${endTime - startTime}ms`);
-        console.log(`返回数据量: ${response.data?.results?.length || 0} 条, 总数据量: ${response.data?.total || 0} 条`);
+        console.log(`返回数据量: ${response?.data?.results?.length || 0} 条, 总数据量: ${response?.data?.total || 0} 条`);
         
-        if (response.data) {
-          this.events = response.data.results || []
+        if (response?.data) {
+          // 优先使用 results 字段，确保能正确显示数据
+          const eventsData = response.data.results || response.data.events || []
+          
+          // 同时更新组件数据和store数据
+          this.events = eventsData
+          this.traceStore.setResults(eventsData)
+          
           this.total = response.data.total || 0
           this.totalPages = Math.ceil(this.total / this.pageSize)
+          
           console.log(`数据更新完成 - 事件列表: ${this.events.length} 条, 总页数: ${this.totalPages}`);
+          console.log(`后端返回数据结构: ${response.data.results ? 'results' : response.data.events ? 'events' : 'none'}`);
+          console.log(`后端返回的完整字段: ${Object.keys(response.data).join(', ')}`);
+          
+          // 调试：检查是否有微博数据
+          const weiboCount = eventsData.filter(item => item.platform && item.platform.includes('微博')).length;
+          console.log(`返回数据中的微博条目数: ${weiboCount}`);
         }
       } catch (error) {
         console.error('获取事件数据失败:', error);
         console.error('错误详情:', {
-          message: error.message,
-          response: error.response ? {
+          message: error?.message || '未知错误',
+          response: error?.response ? {
             status: error.response.status,
             statusText: error.response.statusText,
             data: error.response.data
           } : undefined,
-          request: error.request ? '请求已发送但未收到响应' : undefined,
-          config: error.config ? {
+          request: error?.request ? '请求已发送但未收到响应' : undefined,
+          config: error?.config ? {
             url: error.config.url,
             method: error.config.method,
             params: error.config.params
@@ -378,15 +398,18 @@ export default {
         this.totalPages = 0;
         
         // 显示错误提示
-        if (error.response) {
+        if (error?.response) {
           // 服务器返回了错误状态码
-          this.$message.error(`获取数据失败: ${error.response.status} - ${error.response.statusText}`);
-        } else if (error.request) {
+          this.$message?.error(`获取数据失败: ${error.response.status} - ${error.response.statusText}`);
+        } else if (error?.request) {
           // 请求已发出但没有收到响应
-          this.$message.error('网络错误，请检查您的网络连接');
-        } else {
+          this.$message?.error('网络错误，请检查您的网络连接');
+        } else if (error) {
           // 其他错误
-          this.$message.error(`获取数据失败: ${error.message}`);
+          this.$message?.error(`获取数据失败: ${error.message}`);
+        } else {
+          // 完全未知的错误
+          this.$message?.error('获取数据失败，请稍后重试');
         }
       }
     },
@@ -396,10 +419,10 @@ export default {
       try {
         console.log('开始获取仪表盘数据...');
         const response = await getDashboardMetrics();
-        console.log('仪表盘数据获取成功:', response.status);
+        console.log('仪表盘数据获取成功:', response?.status);
         // 如果需要使用仪表盘数据，可以在这里处理
       } catch (error) {
-        console.warn('获取仪表盘数据失败，但不影响页面主要功能:', error.message);
+        console.warn('获取仪表盘数据失败，但不影响页面主要功能:', error?.message || error);
         // 不抛出错误，允许页面继续加载
       }
     },

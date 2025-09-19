@@ -275,7 +275,7 @@ class MongoDBService:
 
     def create_index(self, field, unique=False):
         """创建索引以提高查询性能"""
-        if not self.collection:
+        if self.collection is None:
             if not self.connect():
                 return False
         

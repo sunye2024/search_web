@@ -184,8 +184,8 @@
         <div class="flex justify-center mt-4 pagination-controls items-center space-x-2">
           <span class="text-sm text-gray-500 leading-none">10条/页</span>
           <button 
-            @click="traceStore.prevPage()"
-            :disabled="traceStore.currentPage === 1"
+            @click="handlePrevPage"
+            :disabled="traceStore.currentPage === 1 || traceStore.loading"
             class="px-2 py-1 border rounded disabled:opacity-50 text-sm flex items-center justify-center"
           >
             <i class="fa fa-chevron-left"></i>
@@ -194,8 +194,8 @@
             {{ traceStore.currentPage }} / {{ traceStore.totalPages }}
           </span>
           <button 
-            @click="traceStore.nextPage()"
-            :disabled="traceStore.currentPage === traceStore.totalPages"
+            @click="handleNextPage"
+            :disabled="traceStore.currentPage === traceStore.totalPages || traceStore.loading"
             class="px-2 py-1 border rounded disabled:opacity-50 text-sm flex items-center justify-center"
           >
             <i class="fa fa-chevron-right"></i>
@@ -299,7 +299,7 @@ export default {
     const executeSearch = async () => {
       // 重置错误信息和分页
       traceStore.setErrorMessage('');
-      traceStore.resetPagination(); // 新增：重置分页到第一页
+      traceStore.setCurrentPage(1);
       // 开始加载状态
       traceStore.setLoading(true);
 
@@ -346,7 +346,10 @@ export default {
         // 统一处理所有类型查询结果中的平台名称替换
         const formattedResults = responseData.map(item => ({
           ...item,
-          datasource: item.datasource === 'weibo' ? '微博' : item.datasource
+          datasource: item.platform || item.datasource || '' // 优先使用platform字段
+        })).map(item => ({
+          ...item,
+          datasource: item.datasource.toLowerCase() === 'weibo' ? '微博' : item.datasource
         }));
 
         // 存储结果到store
@@ -421,6 +424,16 @@ export default {
       }
     };
 
+    // 处理上一页请求
+    const handlePrevPage = () => {
+      traceStore.prevPage();
+    };
+
+    // 处理下一页请求
+    const handleNextPage = () => {
+      traceStore.nextPage();
+    };
+
     return {
       queryContent,
       contentType,
@@ -443,8 +456,8 @@ export default {
       currentMediaUrl, // 存储当前预览的媒体URL
       closeModal,
       traceStore, // 添加store引用
-      // 从store中解构所需的状态和方法
-      ...traceStore
+      handlePrevPage,
+      handleNextPage
     };
   }
 };

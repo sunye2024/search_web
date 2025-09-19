@@ -3,7 +3,7 @@ import axios from 'axios';
 // 创建 axios 实例
 const apiClient = axios.create({
   baseURL: '/api', // 使用相对路径，配合vue.config.js中的代理配置
-  timeout: 20000, // 请求超时时间
+  timeout: 90000, // 请求超时时间增加到90秒，处理大数据量查询
   withCredentials: true, // 允许跨域请求携带Cookie
 });
 
@@ -133,9 +133,9 @@ export const getDashboardMetrics = async () => {
   try {
     console.log('正在请求仪表盘数据...');
     const startTime = Date.now();
-    // 增加超时时间到120秒，因为这个请求可能处理大量数据
+    // 增加超时时间到300秒，因为后端处理这个请求需要较长时间
     const response = await apiClient.get('/getDashboardMetrics', {
-      timeout: 120000 // 120秒超时
+      timeout: 300000 // 300秒超时
     });
     const endTime = Date.now();
     console.log(`仪表盘数据请求成功，耗时: ${endTime - startTime}ms`);

@@ -71,7 +71,7 @@ def search_text(query_content, score_threshold, app_config, top_k_first=100, ngr
     search_body = {
         "query": {"match": {"content": query_content}},
         "_source": ["id", "title", "content", "publishtime", "event", "uid", "uname", 
-                    "isrumor", "datasource", "istweet", "isretweet", "retext", "pic_ids", "pic_urls"],
+                    "isrumor", "datasource", "platform", "istweet", "isretweet", "retext", "pic_ids", "pic_urls"],
         "size": top_k_first
     }
     
