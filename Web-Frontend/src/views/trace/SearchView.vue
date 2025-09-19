@@ -336,22 +336,12 @@ export default {
         // 2. 图片查询
         else if (contentType.value === 'image') {
           const imgResponse = await searchTraceByImage(selectedFile.value, currentValue.value);
-          responseData = imgResponse.data.image_base64_list.map((base64, index) => ({
-            id: `img_${index}`,
-            content: '图片匹配结果',
-            imageUrl: base64,
-            isSource: false
-          }));
-        } 
+          responseData = imgResponse.data.search_results;
+        }
         // 3. 视频查询
         else if (contentType.value === 'video') {
           const videoResponse = await searchTraceByVideo(selectedFile.value, currentValue.value, {timeout: 60000});
-          responseData = videoResponse.data.video_base64_list.map((base64, index) => ({
-            id: `video_${index}`,
-            content: '视频匹配结果',
-            videoUrl: base64,
-            isSource: false
-          }));
+          responseData = videoResponse.data.search_results;
         }
         // 统一处理所有类型查询结果中的平台名称替换
         const formattedResults = responseData.map(item => ({

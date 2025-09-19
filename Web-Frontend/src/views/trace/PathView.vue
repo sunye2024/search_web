@@ -73,8 +73,9 @@
               v-for="(url, index) in originalTweet.results[0].src_v.pics_url.split(', ')" 
               :key="index" 
               :src="url" 
-              class="max-h-40 max-w-40 object-cover rounded-md border border-gray-200"
+              class="max-h-40 max-w-40 object-cover rounded-md border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
               alt="推文图片"
+              @click="handleImageClick(url)"
             >
           </div>
         </div>
@@ -148,6 +149,27 @@
       </div>
     </div>
   </div>
+
+  <!-- 新增：图片放大模态框 -->
+  <div 
+    v-if="showImageModal" 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+    @click="closeImageModal"
+  >
+    <div class="relative max-w-4xl max-h-[90vh]" @click.stop>
+      <button 
+        class="absolute -top-12 right-0 text-white text-2xl hover:text-gray-300 transition-colors"
+        @click="closeImageModal"
+      >
+        <i class="fa fa-times"></i>
+      </button>
+      <img 
+        :src="selectedImageUrl" 
+        class="max-w-full max-h-[90vh] object-contain"
+        alt="放大图片"
+      >
+    </div>
+  </div>
 </template>
 
 <script>
@@ -188,6 +210,9 @@
       const errorMessage = ref('');
       const originalTweet = ref(null);
       const router = useRouter();
+      // 新增：图片放大相关变量
+      const showImageModal = ref(false);
+      const selectedImageUrl = ref('');
       // 监听初始图谱ID变化
       watch(() => props.initialGraphId, (newId) => {
         if (newId && newId !== currentGraphId.value) {
@@ -550,6 +575,18 @@
       
       const getNodeType = (node) => {
         return node.type || node.e_type || '未知类型';
+      }
+
+      // 新增：图片点击放大方法
+      const handleImageClick = (url) => {
+        selectedImageUrl.value = url;
+        showImageModal.value = true;
+      }
+
+      // 新增：关闭图片模态框方法
+      const closeImageModal = () => {
+        showImageModal.value = false;
+        selectedImageUrl.value = '';
       };
 
 
@@ -571,7 +608,12 @@
         originalTweet,
         currentGraphEvent,  // 导出事件名称变量
         switchToEventView,
-        hasSearched  // 导出新增的状态变量
+        hasSearched,  // 导出新增的状态变量
+        // 导出新增的图片放大相关变量和方法
+        showImageModal,
+        selectedImageUrl,
+        handleImageClick,
+        closeImageModal
       };
     }
   };
