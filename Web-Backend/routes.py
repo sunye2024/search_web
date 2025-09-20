@@ -745,7 +745,7 @@ def get_dashboard_metrics():
             metrics['fields'] = field_names
             metrics['field_count'] = field_count
         
-        # 5. 互动总量 (Praise + Reblog + Comment)
+        # 5. 互动总量 (Praise + Reblog + Comment) 以及事件总数
         pipeline = [
             {
                 "$group": {
@@ -763,7 +763,8 @@ def get_dashboard_metrics():
         result = list(collection.aggregate(pipeline))
         if result:
             stats = result[0]
-            metrics['total_nums'] = stats["total_interactions"]
+            # total_nums 现在包含事件总数加上互动总量
+            metrics['total_nums'] = stats["total_interactions"] + real_count  # 加上事件总数
             metrics['total_praise'] = stats["total_praise"]
             metrics['total_reblog'] = stats["total_reblog"]
             metrics['total_comment'] = stats["total_comment"]
