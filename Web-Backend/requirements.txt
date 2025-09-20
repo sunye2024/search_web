@@ -1,0 +1,13 @@
+Flask==2.3.2
+Flask-Cors==4.0.0
+pymongo==4.4.0
+elasticsearch==8.8.0
+milvus==2.2.16
+towhee==1.0.0
+torch==2.0.1
+Pillow==9.5.0
+numpy==1.24.3
+python-dotenv==1.0.0
+requests==2.31.0
+ipython==8.14.0
+ipdb==0.13.13

@@ -44,3 +44,14 @@ class Config:
     # Towhee Video Search 配置
     TOWHEE_LEVELDB_PATH = '/data/storage/8888/sunye/video_search2.db' # 重要：请替换为您的真实路径
     TOWHEE_DEVICE = 0 # 使用GPU 0, 如果没有GPU请设置为None
+
+    # MongoDB配置
+    MONGODB_HOST = os.environ.get('MONGODB_HOST', 'localhost')
+    MONGODB_PORT = int(os.environ.get('MONGODB_PORT', 27017))
+    MONGODB_USERNAME = os.environ.get('MONGODB_USERNAME', '')
+    MONGODB_PASSWORD = os.environ.get('MONGODB_PASSWORD', '')
+    MONGODB_DB = os.environ.get('MONGODB_DB', 'admin')
+    MONGODB_COLLECTION = os.environ.get('MONGODB_COLLECTION', 'event')
+    
+    # 数据库类型配置，默认为MongoDB
+    DB_TYPE = os.environ.get('DB_TYPE', 'mongodb')
